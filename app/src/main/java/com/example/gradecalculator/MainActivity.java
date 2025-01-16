@@ -1,10 +1,11 @@
 package com.example.gradecalculator;
 
 import android.os.Bundle;
-import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,13 +15,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.material.snackbar.Snackbar;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private OcenaManager ocenaManager;
-    private TextView listaOcen;
-    private TextView wynikSredniej;
+    private List<Double> oceny = new ArrayList<>();
+    private ArrayAdapter<String> adapter;
+    private TextView poleSrednia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,26 +36,18 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        ocenaManager = new OcenaManager();
-        listaOcen = findViewById(R.id.gradeList);
-        wynikSredniej = findViewById(R.id.mainResult);
+        poleSrednia = findViewById(R.id.mainResult);
+        ListView listaOcen = findViewById(R.id.listaOcen);
 
-        ImageButton przyciskInfo = findViewById(R.id.imageButtonInfo);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        listaOcen.setAdapter(adapter);
+        //Konwertuje tablice lub liste na zestaw widokow do wykorzystania w ListView
 
-        przyciskInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Snackbar.make(v, "Waga oceny oznacza ile razy masz ją wpisać", Snackbar.LENGTH_INDEFINITE)
-                        .setAction("OK", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                            }
-                        })
-                        .show();
-            }
+        listaOcen.setOnItemClickListener((parent, view, position, id) -> {
+            oceny.remove(position);
+            aktualizujListeOcen();
+            aktualizujSrednia();
         });
-
-        //Snackbar lepsz Toast bo nie zamyka się po chwili i ma przycisk akcji : Wymaga uzycia biblioteki
 
         konfigurujPrzyciskDodajOcene(R.id.grade1, R.id.buttonAddGrade1);
     }
@@ -61,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     private void konfigurujPrzyciskDodajOcene(int idPolaTekstowego, int idPrzycisku) {
         EditText poleOceny = findViewById(idPolaTekstowego);
         Button przyciskDodaj = findViewById(idPrzycisku);
-
 
         przyciskDodaj.setOnClickListener(view -> {
             String wpisanaOcena = poleOceny.getText().toString();
@@ -75,21 +68,36 @@ public class MainActivity extends AppCompatActivity {
                 if (ocena < 0 || ocena > 6) {
                     Toast.makeText(this, "Wprowadź ocenę w zakresie 0-6!", Toast.LENGTH_SHORT).show();
                 } else {
-                    ocenaManager.dodajOcene(ocena);
-                    aktualizujInterfejs();
+                    oceny.add(ocena);
+                    aktualizujListeOcen();
+                    aktualizujSrednia();
                     poleOceny.setText("");
                 }
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Nieprawidłowy format liczby!", Toast.LENGTH_SHORT).show();
             }
-
-            //Try - jeśli w obszarze jego dzialania bedzie błąd krytyczny to przejdzie do Catch aby zapobiec crashu aplikacji
-
         });
     }
 
-    private void aktualizujInterfejs() {
-        listaOcen.setText(ocenaManager.pobierzListeOcen());
-        wynikSredniej.setText("Średnia: " + ocenaManager.obliczSrednia());
+    private void aktualizujListeOcen() {
+        List<String> tekstyOcen = new ArrayList<>();
+        for (int i = 0; i < oceny.size(); i++) {
+            tekstyOcen.add((i + 1) + ". " + oceny.get(i));
+        }
+        adapter.clear();
+        adapter.addAll(tekstyOcen);
+    }
+
+    private void aktualizujSrednia() {
+        if (oceny.isEmpty()) {
+            poleSrednia.setText("Średnia: Brak ocen");
+        } else {
+            double suma = 0;
+            for (double ocena : oceny) {
+                suma += ocena;
+            }
+            double srednia = suma / oceny.size();
+            poleSrednia.setText(String.format("Średnia: %.2f", srednia));
+        }
     }
 }
