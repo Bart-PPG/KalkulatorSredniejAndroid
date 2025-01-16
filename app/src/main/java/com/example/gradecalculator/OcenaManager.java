@@ -6,36 +6,46 @@ import java.util.List;
 public class OcenaManager {
 
     private List<Double> oceny;
+    private List<Integer> wagi;
 
     public OcenaManager() {
         this.oceny = new ArrayList<>();
+        this.wagi = new ArrayList<>();
     }
 
-    public void dodajOcene(double ocena) {
+    public void dodajOcene(double ocena, int waga) {
         oceny.add(ocena);
+        wagi.add(waga);
     }
 
-    public String pobierzListeOcen() {
-        StringBuilder tekstOcen = new StringBuilder("Oceny: \n");
+    public void usunOcene(int index) {
+        if (index >= 0 && index < oceny.size()) {
+            oceny.remove(index);
+            wagi.remove(index);
+        }
+    }
 
-        //Kazda ocena w tablicy to osobny string - StringBuilder
-
+    public List<String> pobierzListeOcen() {
+        List<String> tekstyOcen = new ArrayList<>();
         for (int i = 0; i < oceny.size(); i++) {
-            tekstOcen.append(i + 1).append(". ").append(oceny.get(i)).append("\n");
+            tekstyOcen.add((i + 1) + ". " + oceny.get(i) + " (waga: " + wagi.get(i) + ")");
         }
-        return tekstOcen.toString();
+        return tekstyOcen;
     }
 
-    public String obliczSrednia() {
+    public String obliczSredniaWazona() {
         if (oceny.isEmpty()) {
-            return "brak ocen";
+            return "Brak ocen";
         }
 
-        double suma = 0;
-        for (double ocena : oceny) {
-            suma += ocena;
+        double sumaWazona = 0;
+        int sumaWag = 0;
+        for (int i = 0; i < oceny.size(); i++) {
+            sumaWazona += oceny.get(i) * wagi.get(i);
+            sumaWag += wagi.get(i);
         }
-        double srednia = suma / oceny.size();
-        return String.format("%.2f", srednia);
+
+        double sredniaWazona = sumaWazona / sumaWag;
+        return String.format("%.2f", sredniaWazona);
     }
 }
